@@ -1,0 +1,17 @@
+name: tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -e ".[dev]"
+      - run: .venv/bin/ruff check src tests scripts notebooks/src
+      - run: .venv/bin/python -m pytest -q
+      - name: notebooks convert cleanly
+        run: |
+          for f in notebooks/src/*.py; do .venv/bin/jupytext --to ipynb "$f" -o /tmp/$(basename "${f%.py}").ipynb; done

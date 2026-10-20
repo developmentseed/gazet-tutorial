@@ -1,0 +1,172 @@
+[
+  {
+    "template_id": "lookup_01",
+    "family": "direct_lookup",
+    "difficulty": "easy",
+    "sql": "SELECT id, names.\"primary\" AS name, subtype, ST_AsGeoJSON(geometry) AS geometry FROM read_parquet('divisions_area') WHERE id = '{anchor_id}'",
+    "hints": [
+      "show me {anchor_name}",
+      "where is {anchor_name}?",
+      "map of {anchor_name}",
+      "boundary of {anchor_name}",
+      "find {anchor_name}",
+      "outline of {anchor_name}",
+      "{anchor_name}",
+      "pull up {anchor_name}",
+      "locate {anchor_name}",
+      "what does {anchor_name} look like?",
+      "get the shape of {anchor_name}"
+    ],
+    "anchor_from": "inventory",
+    "target_subtypes": []
+  },
+  {
+    "template_id": "disambiguate_01",
+    "family": "disambiguation",
+    "difficulty": "easy",
+    "sql": "SELECT id, names.\"primary\" AS name, subtype, region, ST_AsGeoJSON(geometry) AS geometry FROM read_parquet('divisions_area') WHERE id = '{anchor_id}'",
+    "hints": [
+      "{anchor_name}, {container_name}",
+      "{anchor_name} in {container_name}",
+      "show me {anchor_name}, {container_name}",
+      "the {anchor_name} that's in {container_name}",
+      "map of {anchor_name} ({container_name})",
+      "find {anchor_name} in {container_name}",
+      "{anchor_name} ({container_name})",
+      "locate {anchor_name} within {container_name}",
+      "{anchor_name} district in {container_name}",
+      "where is {anchor_name}, {container_name}?",
+      "{anchor_name} {container_name}"
+    ],
+    "anchor_from": "contained",
+    "target_subtypes": []
+  },
+  {
+    "template_id": "adj_01",
+    "family": "adjacency",
+    "difficulty": "medium",
+    "sql": "WITH a AS (SELECT geometry, subtype FROM read_parquet('divisions_area') WHERE id = '{anchor_id}') SELECT b.id, b.names.\"primary\" AS name, b.subtype, ST_AsGeoJSON(b.geometry) AS geometry FROM read_parquet('divisions_area') AS b, a WHERE b.id != '{anchor_id}' AND b.subtype = a.subtype AND ST_Touches(a.geometry, b.geometry)",
+    "hints": [
+      "what touches {anchor_name}?",
+      "neighbours of {anchor_name}",
+      "what shares a border with {anchor_name}",
+      "everything bordering {anchor_name}",
+      "what's next to {anchor_name}?",
+      "places adjacent to {anchor_name}",
+      "what surrounds {anchor_name}?",
+      "areas touching {anchor_name}",
+      "find the neighbours of {anchor_name}",
+      "list everything that borders {anchor_name}"
+    ],
+    "anchor_from": "adjacency",
+    "target_subtypes": []
+  },
+  {
+    "template_id": "adj_02",
+    "family": "adjacency",
+    "difficulty": "medium",
+    "sql": "WITH a AS (SELECT geometry FROM read_parquet('divisions_area') WHERE id = '{anchor_id}') SELECT b.id, b.names.\"primary\" AS name, b.subtype, ST_AsGeoJSON(b.geometry) AS geometry FROM read_parquet('divisions_area') AS b, a WHERE b.id != '{anchor_id}' AND b.subtype = '{target_subtype}' AND ST_Touches(a.geometry, b.geometry)",
+    "hints": [
+      "which {target_label} border {anchor_name}?",
+      "{target_label} that touch {anchor_name}",
+      "neighbouring {target_label} of {anchor_name}",
+      "{target_label} adjacent to {anchor_name}",
+      "which {target_label} share a border with {anchor_name}?",
+      "list the {target_label} next to {anchor_name}",
+      "{target_label} along the {anchor_name} border",
+      "show {target_label} bordering {anchor_name}",
+      "what {target_label} are next to {anchor_name}?"
+    ],
+    "anchor_from": "adjacency",
+    "target_subtypes": [
+      "region",
+      "county"
+    ]
+  },
+  {
+    "template_id": "contain_01",
+    "family": "containment",
+    "difficulty": "medium",
+    "sql": "WITH a AS (SELECT geometry FROM read_parquet('divisions_area') WHERE id = '{anchor_id}') SELECT b.id, b.names.\"primary\" AS name, b.subtype, ST_AsGeoJSON(b.geometry) AS geometry FROM read_parquet('divisions_area') AS b, a WHERE b.id != '{anchor_id}' AND b.subtype = '{target_subtype}' AND ST_Within(b.geometry, a.geometry)",
+    "hints": [
+      "{target_label} of {anchor_name}",
+      "what {target_label} are in {anchor_name}?",
+      "list all {target_label} inside {anchor_name}",
+      "{target_label} in {anchor_name}",
+      "which {target_label} fall within {anchor_name}?",
+      "all {target_label} within {anchor_name}",
+      "{anchor_name} {target_label}",
+      "give me the {target_label} in {anchor_name}",
+      "which {target_label} does {anchor_name} contain?",
+      "show every one of the {target_label} in {anchor_name}"
+    ],
+    "anchor_from": "containment",
+    "target_subtypes": [
+      "county",
+      "region"
+    ]
+  },
+  {
+    "template_id": "contain_02",
+    "family": "containment",
+    "difficulty": "medium",
+    "sql": "WITH a AS (SELECT geometry FROM read_parquet('divisions_area') WHERE id = '{anchor_id}') SELECT b.id, b.names.\"primary\" AS name, b.subtype, ST_AsGeoJSON(b.geometry) AS geometry FROM read_parquet('divisions_area') AS b, a WHERE b.subtype = '{target_subtype}' AND ST_Contains(b.geometry, a.geometry)",
+    "hints": [
+      "which {target_singular} is {anchor_name} in?",
+      "what {target_singular} contains {anchor_name}?",
+      "{anchor_name} belongs to which {target_singular}?",
+      "{target_singular} of {anchor_name}",
+      "find the {target_singular} that contains {anchor_name}",
+      "which {target_singular} does {anchor_name} fall in?",
+      "what {target_singular} is {anchor_name} part of?",
+      "tell me the {target_singular} for {anchor_name}"
+    ],
+    "anchor_from": "contained",
+    "target_subtypes": [
+      "region"
+    ]
+  },
+  {
+    "template_id": "buffer_01",
+    "family": "buffer",
+    "difficulty": "hard",
+    "sql": "WITH a AS (SELECT ST_Buffer(geometry, {buffer_m} / 111320.0) AS geom FROM read_parquet('divisions_area') WHERE id = '{anchor_id}') SELECT b.id, b.names.\"primary\" AS name, b.subtype, ST_AsGeoJSON(b.geometry) AS geometry FROM read_parquet('divisions_area') AS b, a WHERE b.id != '{anchor_id}' AND b.subtype = '{target_subtype}' AND ST_Intersects(b.geometry, a.geom)",
+    "hints": [
+      "which {target_label} are within {buffer_label} of {anchor_name}?",
+      "{target_label} within {buffer_label} of {anchor_name}",
+      "find {target_label} within a {buffer_label} radius of {anchor_name}",
+      "{target_label} within {buffer_label} around {anchor_name}",
+      "what {target_label} fall within {buffer_label} of {anchor_name}?",
+      "show {target_label} up to {buffer_label} from {anchor_name}",
+      "{target_label} near {anchor_name}, within {buffer_label}",
+      "{target_label} no more than {buffer_label} from {anchor_name}"
+    ],
+    "anchor_from": "inventory",
+    "target_subtypes": [
+      "county",
+      "region"
+    ]
+  },
+  {
+    "template_id": "agg_01",
+    "family": "aggregation",
+    "difficulty": "hard",
+    "sql": "WITH a AS (SELECT geometry FROM read_parquet('divisions_area') WHERE id = '{anchor_id}') SELECT b.id, b.names.\"primary\" AS name, b.subtype, ST_Area(b.geometry) AS area, ST_AsGeoJSON(b.geometry) AS geometry FROM read_parquet('divisions_area') AS b, a WHERE b.id != '{anchor_id}' AND b.subtype = '{target_subtype}' AND ST_Within(b.geometry, a.geometry) ORDER BY area {order} LIMIT {top_n}",
+    "hints": [
+      "top {top_n} {superlative} {target_label} in {anchor_name}",
+      "{top_n} {superlative} {target_label} of {anchor_name}",
+      "the {top_n} {superlative} {target_label} in {anchor_name}",
+      "which are the {top_n} {superlative} {target_label} in {anchor_name}?",
+      "{anchor_name}'s {top_n} {superlative} {target_label}",
+      "the {superlative} {target_singular} in {anchor_name}",
+      "which is the {superlative} {target_singular} of {anchor_name}?",
+      "{superlative} {target_singular} in {anchor_name}",
+      "what is the {superlative} {target_singular} of {anchor_name}?"
+    ],
+    "anchor_from": "containment",
+    "target_subtypes": [
+      "county",
+      "region"
+    ]
+  }
+]

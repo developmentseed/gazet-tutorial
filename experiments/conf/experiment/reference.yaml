@@ -1,0 +1,16 @@
+# @package _global_
+# The notebook recipe, sized for a 48 GB GPU: one step of 32 instead of 8 x 2 (bf16 on L40S).
+train:
+  batch_size: 16                  # x2 accumulation = 32: a 32 x 1024 batch materialises ~20 GB of fp32 logits and OOMs a 44 GB L40S
+  grad_accum: 2
+  gradient_checkpointing: false   # 48 GB: keep activations, ~30% faster
+  group_by_length: true
+eval:
+  gen_batch: 32
+  eval_every: 50
+  final_n: 60
+  save_every: 50
+  save_merged: true
+run:
+  name: reference
+  gpu: L40S

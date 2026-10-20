@@ -1,0 +1,53 @@
+# Hydra config for experiments/train.py. Override anything from the CLI:
+#   python experiments/train.py train.lr=1e-4 train.epochs=2
+#   python experiments/train.py -m train.lr=1e-4,2e-4 train.lora_r=8,16        # 4 runs in parallel on Modal
+#   python experiments/train.py +experiment=smoke                              # 20 steps, tiny eval
+defaults:
+  - data: bundled
+  - override hydra/launcher: joblib
+  - _self_
+
+train:
+  base_model: unsloth/Qwen3.5-0.8B
+  max_seq_length: 1024
+  epochs: 1
+  max_steps: null          # set to stop early (smoke tests)
+  lr: 2e-4
+  lora_r: 16
+  lora_alpha: null         # null -> 2 × r
+  lora_dropout: 0.0
+  weight_decay: 0.01
+  batch_size: 8
+  grad_accum: 2            # effective batch 16
+  warmup_steps: 20
+  scheduler: linear
+  gradient_checkpointing: true   # needed on a 16 GB T4; set false on a 48 GB GPU (~30% faster)
+  group_by_length: false
+  seed: 108
+
+eval:
+  eval_every: 25           # steps between val loss + benchmark checks (the overfitting curve)
+  val_cap: 128
+  bench_n: 20              # benchmark rows per split per task during training; 2× at the end
+  gen_batch: 8             # generation batch for the benchmark eval; 32 on a big GPU
+  final_n: 40              # rows per split per task for the end-of-run score
+  save_every: null         # adapter checkpoint every N steps (kept under runs/<name>/trainer/checkpoint-N)
+  save_merged: false       # also save merged 16-bit weights for the GGUF path
+  bench_splits: [iid, unseen_region, unseen_anchor, noisy]
+
+run:
+  name: null               # null -> r{r}-lr{lr}-ep{epochs}-{time}
+  gpu: T4                  # T4 mirrors Colab; L4 / A10G / A100 for speed
+  project: gazet-tutorial  # trackio project (local SQLite on the Modal volume)
+  dry_run: false           # print the resolved config and the TrainConfig, launch nothing
+
+hydra:
+  job:
+    chdir: false
+  run:
+    dir: experiments/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: experiments/multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    subdir: ${hydra.job.num}
+  launcher:
+    n_jobs: 6              # parallel Modal runs in a multirun

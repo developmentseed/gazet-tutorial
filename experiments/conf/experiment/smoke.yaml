@@ -1,0 +1,11 @@
+# @package _global_
+# 20 steps, tiny eval, same code path: python experiments/train.py +experiment=smoke
+train:
+  max_steps: 20
+  warmup_steps: 2
+eval:
+  eval_every: 10
+  bench_n: 5
+  val_cap: 32
+run:
+  name: smoke

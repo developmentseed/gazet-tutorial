@@ -1,0 +1,55 @@
+{
+  "total_samples": 3524,
+  "targets": {
+    "lookup_01": 450,
+    "disambiguate_01": 450,
+    "adj_01": 450,
+    "adj_02": 500,
+    "contain_01": 400,
+    "contain_02": 400,
+    "buffer_01": 500,
+    "agg_01": 450
+  },
+  "holdout_states": {
+    "IN-KL": "Kerala",
+    "IN-OD": "Odisha",
+    "IN-GA": "Goa"
+  },
+  "n_unseen_region_features": 50,
+  "n_unseen_anchor_features": 30,
+  "splits": {
+    "train": {
+      "n": 2819,
+      "by_family": {
+        "adjacency": 760,
+        "aggregation": 360,
+        "buffer": 400,
+        "containment": 579,
+        "direct_lookup": 360,
+        "disambiguation": 360
+      }
+    },
+    "val": {
+      "n": 352,
+      "by_family": {
+        "adjacency": 95,
+        "aggregation": 45,
+        "buffer": 50,
+        "containment": 72,
+        "direct_lookup": 45,
+        "disambiguation": 45
+      }
+    },
+    "test": {
+      "n": 353,
+      "by_family": {
+        "adjacency": 95,
+        "aggregation": 45,
+        "buffer": 50,
+        "containment": 73,
+        "direct_lookup": 45,
+        "disambiguation": 45
+      }
+    }
+  }
+}

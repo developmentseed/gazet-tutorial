@@ -1,0 +1,19 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.ipynb_checkpoints/
+notebooks/*.executed.ipynb
+data/
+outputs/
+work/
+*.gguf
+artifacts/*.parquet
+
+# hydra run dirs
+experiments/outputs/
+experiments/multirun/

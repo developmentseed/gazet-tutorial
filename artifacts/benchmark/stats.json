@@ -1,0 +1,66 @@
+{
+  "iid": {
+    "n": 353,
+    "by_template": {
+      "contain_02": 40,
+      "buffer_01": 50,
+      "lookup_01": 45,
+      "adj_01": 45,
+      "agg_01": 45,
+      "contain_01": 33,
+      "disambiguate_01": 45,
+      "adj_02": 50
+    }
+  },
+  "unseen_region": {
+    "n": 310,
+    "by_template": {
+      "lookup_01": 40,
+      "disambiguate_01": 40,
+      "adj_01": 40,
+      "adj_02": 40,
+      "contain_01": 30,
+      "contain_02": 40,
+      "buffer_01": 40,
+      "agg_01": 40
+    }
+  },
+  "unseen_anchor": {
+    "n": 240,
+    "by_template": {
+      "lookup_01": 40,
+      "disambiguate_01": 40,
+      "adj_01": 40,
+      "adj_02": 40,
+      "contain_02": 40,
+      "buffer_01": 40
+    }
+  },
+  "noisy": {
+    "n": 200,
+    "by_template": {
+      "contain_02": 20,
+      "contain_01": 20,
+      "adj_01": 20,
+      "agg_01": 31,
+      "buffer_01": 17,
+      "lookup_01": 24,
+      "disambiguate_01": 49,
+      "adj_02": 19
+    },
+    "retrieval_ceiling": {
+      "abbreviation": 0.66,
+      "alias": 0.78,
+      "lowercase": 1.0,
+      "typo": 1.0
+    }
+  },
+  "compositional": {
+    "n": 150,
+    "by_template": {
+      "adj_within": 50,
+      "agg_adjacent": 50,
+      "buffer_agg": 50
+    }
+  }
+}
