@@ -1,0 +1,38 @@
+{
+ "prompts": {
+  "sql": 270,
+  "places": 310
+ },
+ "mixed": {
+  "sql": 42,
+  "places": 4
+ },
+ "always_pass": {
+  "sql": 123,
+  "places": 200
+ },
+ "always_fail": {
+  "sql": 105,
+  "places": 106
+ },
+ "by_family": {
+  "sql": {
+   "containment": 1,
+   "buffer": 1,
+   "disambiguation": 14,
+   "aggregation": 2,
+   "adjacency": 4,
+   "direct_lookup": 1,
+   "compositional": 19
+  },
+  "places": {
+   "containment": 1,
+   "disambiguation": 3
+  }
+ },
+ "source": "benchmark",
+ "model": "work/gguf/reference-q8_0.gguf",
+ "k": 6,
+ "temperature": 0.8,
+ "pairs": 46
+}

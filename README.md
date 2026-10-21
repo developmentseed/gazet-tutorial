@@ -19,6 +19,7 @@ honest benchmark that includes gpt-oss:20b, the model gazet runs in production.
 |---|---|---|---|---|
 | 1 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/developmentseed/gazet-tutorial/blob/main/notebooks/01_data_and_dataset.ipynb) `01_data_and_dataset` | CPU | ~30 min | Pull India's boundaries from Overture and clean them, compute spatial relations, write SQL templates, hold out places, generate ~3,600 verified training examples for two tasks, build the benchmark splits |
 | 2 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/developmentseed/gazet-tutorial/blob/main/notebooks/02_train_eval_inference.ipynb) `02_train_eval_inference` | T4 GPU | ~45 min | LoRA fine-tune Qwen3.5-0.8B with Unsloth, run the geocoder end to end on a map, export a q8_0 GGUF to take home (the benchmark is scored offline against that GGUF) |
+| 3 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/developmentseed/gazet-tutorial/blob/main/notebooks/03_dpo.ipynb) `03_dpo` (optional) | T4 GPU | ~25 min | Demo: DPO on top of the SFT adapter with pairs mined from the model's own answers and verified by execution; before/after on the noisy and compositional subset; what preference tuning can and cannot fix |
 
 **No accounts needed.** No token, no Drive mount. `pip install` of this repo carries the
 `artifacts/` folder inside the package, so the dataset, the benchmark and the baseline
@@ -146,7 +147,7 @@ questions interactively.
 | 1:30–2:00 | Break (start notebook 2's install cell before you leave) |
 | 2:00–2:30 | Notebook 2: LoRA, the masking check, training; the geocoder end to end on a map while the GGUF exports |
 | 2:30–3:00 | Model export and the app: download the GGUF, `llama serve` it, try it in the local playground next to the base model and gpt-oss:20b |
-| 3:00–3:30 | Explore on your own: score your GGUF on the benchmark (`scripts/benchmark_gguf.py`), ask the app questions, start the take-home assignments |
+| 3:00–3:30 | Explore on your own: score your GGUF on the benchmark (`scripts/benchmark_gguf.py`), ask the app questions, try the DPO demo (notebook 3), start the take-home assignments |
 
 Take-home: train 2 epochs, add a template, add your state's abbreviations and old names
 to `gazet_tutorial/india.py` and re-run the noisy split, swap the country.
@@ -179,12 +180,12 @@ Every step is a command you type and understand:
 notebooks/            the two .ipynb files Colab opens (generated from notebooks/src/*.py)
 notebooks/src/        percent-format sources; edit these, then scripts/build_notebooks.sh
 src/gazet_tutorial/   helper package: DuckDB/Overture access, fuzzy search, SQL utils, eval, benchmark, baseline client, maps
-artifacts/            bundled output of notebook 1 (dataset, benchmark, relations) and committed baseline predictions
+artifacts/            bundled output of notebook 1 (dataset, benchmark, relations), committed baseline predictions, DPO pairs (dpo/)
 app/                  Streamlit playground (compare models locally via llama serve)
 experiments/          Modal training runs + sweeps with local trackio logging (where notebook 2's defaults come from)
 docs/                 take-it-home.md (model -> GGUF -> llama serve, by hand), post-training roadmap (DPO, GRPO)
 tests/                pytest suite (synthetic square polygons, no downloads)
-scripts/              build_notebooks.sh, run_nb1.sh (regenerates artifacts/), benchmark_gguf.py (score a GGUF vs gpt-oss and base), run_baseline.py, paraphrase.py, serve_models.sh
+scripts/              build_notebooks.sh, run_nb1.sh (regenerates artifacts/), benchmark_gguf.py (score a GGUF vs gpt-oss and base), mine_pairs.py (DPO pairs for notebook 3), run_baseline.py, paraphrase.py, serve_models.sh
 ```
 
 The learner-facing logic (templates, generation loop, prompts, training config,
@@ -199,10 +200,10 @@ uv pip install --python .venv/bin/python -e ".[dev]"
 .venv/bin/python -m pytest
 scripts/run_nb1.sh                # executes notebook 1 (downloads ~60 MB from Overture S3)
 scripts/run_nb1.sh "/path/to/overture/divisions_area/*.parquet"   # or from a local copy
-scripts/build_notebooks.sh        # regenerate both .ipynb files after editing notebooks/src
+scripts/build_notebooks.sh        # regenerate the .ipynb files after editing notebooks/src
 ```
 
-Notebook 2 needs a CUDA GPU (Unsloth does not run on Apple Silicon); run it in Colab.
+Notebooks 2 and 3 need a CUDA GPU (Unsloth does not run on Apple Silicon); run them in Colab.
 
 Hyperparameter work happens outside the notebook: `experiments/modal_train.py` runs the same
 training on a Modal GPU from a laptop, logs every run to a local trackio database and scores
