@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Convenience: serve the playground's models with `llama serve` (llama.app CLI), one port each.
 # Learn the individual commands first: docs/take-it-home.md.
-#   scripts/serve_models.sh start [model.gguf ...]   # base :8080, gpt-oss :8082, each GGUF on :8081, :8083, :8084 ...
+#   scripts/serve_models.sh start                    # base :8080, the published fine-tuned model :8081, gpt-oss :8082
+#   scripts/serve_models.sh start [model.gguf ...]   # your own GGUF(s) on :8081, :8083, :8084 ... instead
 #   scripts/serve_models.sh stop
 #   SKIP_GPT_OSS=1 scripts/serve_models.sh start reference-q8_0.gguf short-q8_0.gguf reference-step50-q8_0.gguf
 # Each GGUF becomes a sidebar row in the app, named after the file (work/served.json).
@@ -10,6 +11,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p work/logs
 BASE_HF="${BASE_HF:-unsloth/Qwen3.5-0.8B-GGUF:Q8_0}"
+FINETUNED_HF="${FINETUNED_HF:-developmentseed/gazet-tutorial-qwen3.5-0.8b-GGUF:Q8_0}"   # the workshop's reference run
 GPT_OSS_HF="${GPT_OSS_HF:-ggml-org/gpt-oss-20b-GGUF:MXFP4}"
 COMMON=(--host 127.0.0.1 --jinja -ngl 99)
 
@@ -22,6 +24,12 @@ start() {
     nohup llama serve -hf "$GPT_OSS_HF" --port 8082 -c 8192 -np 1 "${COMMON[@]}" > work/logs/gpt-oss.log 2>&1 &
   fi
   local port=8081 rows=()
+  if [[ $# -eq 0 ]]; then
+    echo "finetuned :8081  $FINETUNED_HF (0.8 GB download on first start)"
+    nohup llama serve -hf "$FINETUNED_HF" --port 8081 -c 4096 -np 2 -a gazet-tutorial "${COMMON[@]}" > work/logs/finetuned.log 2>&1 &
+    rows+=('{"name": "gazet-tutorial", "port": 8081}')
+    port=8083
+  fi
   for gguf in "$@"; do
     [[ -f "$gguf" ]] || { echo "not a file: $gguf"; exit 1; }
     local name; name="$(basename "$gguf" .gguf)"

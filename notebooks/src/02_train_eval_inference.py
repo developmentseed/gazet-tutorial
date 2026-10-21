@@ -362,6 +362,10 @@ r = geocode("neighbours of Lakshadweep")   # a trick question: islands touch not
 # gpt-oss:20b, compare the three in the Streamlit playground (`app/README.md`) with maps,
 # and score it on the benchmark with `scripts/benchmark_gguf.py`, which prints your model's
 # execution accuracy per split next to gpt-oss:20b and the base model.
+#
+# If this session dies before the download, the workshop's reference run of exactly this
+# notebook is on Hugging Face as a [GGUF](https://huggingface.co/developmentseed/gazet-tutorial-qwen3.5-0.8b-GGUF)
+# and a [LoRA adapter](https://huggingface.co/developmentseed/gazet-tutorial-qwen3.5-0.8b-lora).
 
 # %%
 if RUN_GGUF:

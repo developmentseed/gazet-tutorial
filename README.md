@@ -153,6 +153,18 @@ to `gazet_tutorial/india.py` and re-run the noisy split, swap the country.
 
 ## Take it home
 
+**No time to train?** The workshop's reference run is published on Hugging Face, as a
+[LoRA adapter](https://huggingface.co/developmentseed/gazet-tutorial-qwen3.5-0.8b-lora)
+and as a [q8_0 GGUF](https://huggingface.co/developmentseed/gazet-tutorial-qwen3.5-0.8b-GGUF).
+With llama.cpp installed, one command serves the geocoder model, and the benchmark script
+takes the same spec:
+
+```bash
+llama serve -hf developmentseed/gazet-tutorial-qwen3.5-0.8b-GGUF:Q8_0 --port 8081 --jinja -c 4096 -ngl 99
+python scripts/benchmark_gguf.py developmentseed/gazet-tutorial-qwen3.5-0.8b-GGUF:Q8_0
+scripts/serve_models.sh start        # base, the published model and gpt-oss:20b for the playground app
+```
+
 After training, the tutorial continues on your laptop: merge and download the model from
 Colab, convert it to GGUF and quantize it with llama.cpp's tools, serve it with
 `llama serve` next to the base model and gpt-oss:20b (also through llama.cpp, installed

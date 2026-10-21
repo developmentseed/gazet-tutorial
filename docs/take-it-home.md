@@ -22,6 +22,13 @@ cd /path/to/gazet-tutorial
 mv ~/Downloads/*q8_0*.gguf gazet-in-q8_0.gguf     # the name the serve commands below use
 ```
 
+No GGUF of your own? The workshop's reference run is published as
+[developmentseed/gazet-tutorial-qwen3.5-0.8b-GGUF](https://huggingface.co/developmentseed/gazet-tutorial-qwen3.5-0.8b-GGUF);
+in step 6 use `llama serve -hf developmentseed/gazet-tutorial-qwen3.5-0.8b-GGUF:Q8_0` in place
+of `-m gazet-in-q8_0.gguf` and llama.cpp downloads it (0.8 GB, no account). The adapter it was
+made from is at
+[developmentseed/gazet-tutorial-qwen3.5-0.8b-lora](https://huggingface.co/developmentseed/gazet-tutorial-qwen3.5-0.8b-lora).
+
 With the GGUF in hand you can skip straight to [step 2](#2-install-llamacpp) for the
 runtime and then to serving. Steps 3 and 4 show how the conversion works if you would
 rather do it yourself from the saved adapter (`outputs/adapter/` on the VM, merged with
