@@ -340,9 +340,8 @@ map_features(r["result"], anchors=r["anchors"])
 # Each of those is one of the benchmark splits notebook 1 built (`unseen_region`,
 # `noisy`, `compositional`). We score them offline against the exported GGUF with
 # `scripts/benchmark_gguf.py`, next to the base model and gpt-oss:20b; each gap is
-# the kind you close with more data,
-# a new template, or the preference / RL stages described in
-# `docs/post-training-roadmap.md`.
+# the kind you close with more data, a new template, or a preference-tuning stage on
+# top of this model.
 
 # %%
 for q in ["districts of Kerala", "districts of UP", "districts of Karnataka that border Tamil Nadu"]:
@@ -404,8 +403,7 @@ if RUN_GGUF:
 # - Change the country code and bbox in notebook 1 to your own country.
 #
 # **What comes next** (a later session): preference tuning and reinforcement learning
-# on exactly this benchmark, using execution as the reward. The plan is in
-# [`docs/post-training-roadmap.md`](https://github.com/developmentseed/gazet-tutorial/blob/main/docs/post-training-roadmap.md).
+# on exactly this benchmark, using execution as the reward.
 #
 # The full-scale version (248 countries, Natural Earth physical features, 81 templates,
 # 43k samples) is [gazet](https://github.com/developmentseed/gazet), with a live demo
