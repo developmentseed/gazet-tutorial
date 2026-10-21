@@ -29,3 +29,33 @@ def test_run_rows_resumable_and_align(tmp_path, monkeypatch):
     kept, p = align(rows[1:] + [{"messages": [], "metadata": {"sample_id": "zz"}}], preds)
     assert [r["metadata"]["sample_id"] for r in kept] == ["id1", "id2"] and p == ["SELECT 1"] * 2
     assert json.loads(out.read_text().splitlines()[0])["task"] == "sql"
+
+
+def test_score_predictions_subset_and_headline(tmp_path):
+    from gazet_tutorial.baseline import headline, score_predictions
+
+    def row(sid, gold):
+        return {"messages": [{"role": "system", "content": "s"}, {"role": "user", "content": "q"},
+                             {"role": "assistant", "content": gold}],
+                "metadata": {"sample_id": sid, "task_family": "direct_lookup", "template_id": "lookup_01"}}
+
+    gold = '{"places": [{"place": "Nagpur"}]}'
+    bench = {"iid": {"places": [row("a", gold), row("b", gold), row("c", gold)]}}
+    subset = {"iid": {"places": ["a", "b"]}}          # c is outside the subset gpt-oss was scored on
+    pred_dir = tmp_path / "m"
+    pred_dir.mkdir()
+    (pred_dir / "places_iid.jsonl").write_text("\n".join(json.dumps(r) for r in [
+        {"sample_id": "a", "pred": gold},
+        {"sample_id": "b", "pred": '{"places": [{"place": "Pune"}]}'},
+        {"sample_id": "c", "pred": gold},
+    ]))
+    res = score_predictions(bench, subset, pred_dir, con=None, geodata_path=None, tasks=["places"])
+    df = res["iid"]["places"]
+    assert df["sample_id"].tolist() == ["a", "b"]      # subset only, benchmark order
+    assert df["f1"].tolist() == [1.0, 0.0]
+
+    sql_table, places_table = headline({"m": res, "other": {"iid": {"places": df.iloc[:1]}}})
+    assert sql_table.empty
+    assert places_table.loc["m", "iid"] == 0.5 and places_table.loc["m", "rows"] == 2
+    assert places_table.loc["other", "iid"] == 1.0 and places_table.loc["other", "rows"] == 1
+    assert list(places_table.columns) == ["iid", "mean", "rows"]

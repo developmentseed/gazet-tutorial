@@ -138,3 +138,71 @@ def align(rows: list[dict], preds: dict[str, str]) -> tuple[list[dict], list[str
     """Rows that have a prediction, with predictions in the same order."""
     kept = [r for r in rows if r["metadata"]["sample_id"] in preds]
     return kept, [preds[r["metadata"]["sample_id"]] for r in kept]
+
+
+# ── scoring prediction folders (scripts/benchmark_gguf.py) ──────────────────
+
+def score_predictions(
+    bench: dict,
+    subset: dict,
+    pred_dir: str | Path,
+    con,
+    geodata_path: str | Path,
+    splits: list[str] | None = None,
+    tasks: list[str] | None = None,
+) -> dict[str, dict]:
+    """{split: {task: scored DataFrame}} for the predictions in `pred_dir`.
+
+    Only rows in `subset` (the fixed 40 SQL + 20 extraction questions per split that
+    gpt-oss was scored on) are kept, so every model is compared on the same questions.
+    Scoring is execution accuracy for SQL and set P/R/F1 for extraction, the same code
+    the experiments use.
+    """
+    from .benchmark import SPLITS, TASKS
+    from .eval import evaluate_places, evaluate_sql
+
+    pred_dir = Path(pred_dir)
+    out: dict[str, dict] = {}
+    for split in splits or SPLITS:
+        for task in tasks or TASKS:
+            rows = bench.get(split, {}).get(task)
+            if not rows:
+                continue
+            ids = subset.get(split, {}).get(task)
+            if ids is not None:
+                keep = set(ids)
+                rows = [r for r in rows if r["metadata"]["sample_id"] in keep]
+            rows, preds = align(rows, load_predictions(pred_dir / f"{task}_{split}.jsonl"))
+            if not rows:
+                continue
+            df = evaluate_sql(rows, preds, con, geodata_path) if task == "sql" else evaluate_places(rows, preds)
+            out.setdefault(split, {})[task] = df
+    return out
+
+
+def headline(results: dict[str, dict], splits: list[str] | None = None):
+    """(SQL execution accuracy, extraction F1) tables: one row per model, one column per split.
+
+    `results` is {model_name: score_predictions(...)}. The `rows` column counts the
+    questions scored, so a partial run (``--limit``) is visible next to a full one.
+    """
+    import pandas as pd
+
+    from .benchmark import SPLITS
+
+    def table(task: str, metric: str) -> pd.DataFrame:
+        cells: dict[str, dict] = {}
+        for model_name, per_split in results.items():
+            for split, per_task in per_split.items():
+                df = per_task.get(task)
+                if df is not None and len(df):
+                    cells.setdefault(model_name, {})[split] = df[metric].mean()
+                    cells[model_name]["rows"] = cells[model_name].get("rows", 0) + len(df)
+        out = pd.DataFrame(cells).T
+        cols = [s for s in (splits or SPLITS) if s in out.columns]
+        out = out.reindex(columns=cols + ["rows"])
+        out.insert(len(cols), "mean", out[cols].mean(axis=1))
+        out["rows"] = out["rows"].astype(int)
+        return out
+
+    return table("sql", "exec_match"), table("places", "f1")

@@ -1,31 +1,31 @@
 # Take the model home: from Colab to a local geocoder, step by step
 
-Notebook 2 leaves you with a LoRA adapter on a Colab machine. This page walks through
-turning it into a file you can run anywhere, serving it next to the base model and
-gpt-oss:20b, and comparing the three in a small app. Every step is a command you type;
-read what each one does before running it, because this is the part of the workshop
-that is most useful back at work.
+Notebook 2 leaves you with a q8_0 GGUF of the fine-tuned model on a Colab machine. This
+page walks through serving it next to the base model and gpt-oss:20b, and comparing the
+three in a small app. Every step is a command you type; read what each one does before
+running it, because this is the part of the workshop that is most useful back at work.
 
 You need: macOS or Linux, [`uv`](https://docs.astral.sh/uv/), `git`, about 3 GB of disk
 (15 GB if you also serve gpt-oss), and a clone of this repository.
 
-## 1. Get the merged model out of Colab
+## 1. Get the model out of Colab
 
 A LoRA adapter is a small set of delta matrices that only make sense on top of the exact
-base model. For deployment you **merge** them into the base weights once, and ship one
-ordinary checkpoint.
-
-In notebook 2 set `SAVE_MERGED = True` (parameters cell) before you run the training
-section. The take-home cell then writes `outputs/merged/` (a normal Hugging Face
-checkpoint: `config.json`, `model.safetensors`, tokenizer files, about 1.6 GB in 16-bit)
-and zips it. Download `merged.zip` from the Colab file browser, or uncomment the
-`files.download(...)` line, and unzip it:
+base model. For deployment you **merge** them into the base weights once, convert the
+result to llama.cpp's file format and quantize it. Notebook 2's last cell does all three
+on the Colab VM (`RUN_GGUF = True`, the default) and prints the path of the resulting
+`.gguf` (about 0.9 GB). Download it from the Colab file browser, or uncomment the
+`files.download(...)` line in that cell, and put it somewhere handy:
 
 ```bash
-cd ~/Downloads
-unzip -q merged.zip -d merged
-ls merged            # config.json  model.safetensors  tokenizer.json  ...
+cd /path/to/gazet-tutorial
+mv ~/Downloads/*q8_0*.gguf gazet-in-q8_0.gguf     # the name the serve commands below use
 ```
+
+With the GGUF in hand you can skip straight to [step 2](#2-install-llamacpp) for the
+runtime and then to serving. Steps 3 and 4 show how the conversion works if you would
+rather do it yourself from the saved adapter (`outputs/adapter/` on the VM, merged with
+`peft`), or if you need a different quantization.
 
 ## 2. Install llama.cpp
 
@@ -124,7 +124,26 @@ curl -s localhost:8081/v1/chat/completions -H 'Content-Type: application/json' -
 Expected: `{"places": [{"place": "Nagpur"}]}`. (The full system prompts the notebook used
 are in `artifacts/dataset/prompts.json`; the app sends those.)
 
-## 7. The other two models
+## 7. Score it on the benchmark
+
+The notebook stopped at a map. The benchmark from notebook 1 is how you find out what the
+model actually learned, and it runs against the GGUF you just served, with execution
+accuracy as the metric (predicted and reference SQL must return the same feature ids):
+
+```bash
+.venv/bin/python scripts/benchmark_gguf.py gazet-in-q8_0.gguf
+```
+
+It starts its own `llama serve` on port 8089 (or pass `--base-url http://localhost:8081/v1
+--name gazet-in` to use the one from step 6), asks the 40 SQL + 20 extraction questions
+of every split, writes the answers to `work/benchmark/gazet-in-q8_0/`, scores them and
+prints two tables: your model next to the committed zero-shot gpt-oss:20b and the
+untouched Qwen3.5-0.8B, one column per split. About five minutes on a laptop GPU. The
+run is resumable, `--limit 3` is a smoke test, and `--compare-only` reprints the tables.
+Read the columns right to left: `iid` flatters a small model; `unseen_region`, `noisy`
+and `compositional` are where the interesting gaps are.
+
+## 8. The other two models
 
 The **base model** is what you started from, before fine-tuning. Unsloth publishes it as
 GGUF, and `llama serve` downloads straight from the Hub into its cache (public, no
@@ -150,7 +169,7 @@ Each server is one process on one port; stop them with Ctrl-C. Once the commands
 familiar, `scripts/serve_models.sh start gazet-in-q8_0.gguf` launches all three in the
 background.
 
-## 8. Compare them in the app
+## 9. Compare them in the app
 
 ```bash
 uv venv --python 3.12 .venv
