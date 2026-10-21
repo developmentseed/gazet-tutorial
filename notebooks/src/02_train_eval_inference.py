@@ -366,11 +366,14 @@ r = geocode("neighbours of Lakshadweep")   # a trick question: islands touch not
 
 # %%
 if RUN_GGUF:
-    gguf_dir = OUT / "gguf"
-    model.save_pretrained_gguf(str(gguf_dir), tokenizer, quantization_method="q8_0")
-    ggufs = sorted(gguf_dir.glob("*.gguf"))
+    # Unsloth writes the merged 16-bit checkpoint to OUT/merged (1.7 GB, a by-product)
+    # and the quantized file next to it, in OUT/merged_gguf/.
+    model.save_pretrained_gguf(str(OUT / "merged"), tokenizer, quantization_method="q8_0")
+    ggufs = sorted(OUT.rglob("*.gguf"), key=lambda p: p.stat().st_mtime)
+    if not ggufs:
+        raise FileNotFoundError(f"no .gguf written under {OUT}; scroll up for the converter's error")
     for p in ggufs:
-        print(f"{p.name}  {p.stat().st_size/1e9:.2f} GB")
+        print(f"{p.relative_to(OUT)}  {p.stat().st_size/1e9:.2f} GB")
     gguf_path = next((p for p in ggufs if "q8_0" in p.name.lower()), ggufs[-1])
     print("\nGGUF:", gguf_path)
     # Download it to your laptop (Colab only, ~0.9 GB; or use the file browser on the left):
